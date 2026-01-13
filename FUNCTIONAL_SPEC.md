@@ -26,7 +26,6 @@ This document defines the functional and technical requirements for the SerialSn
 
 ## 2. Project Scope
 
-### 2.1 In Scope
 - Real-time serial data capture and monitoring
 - Multiple data format display (Hex, ASCII, Binary)
 - Configurable serial communication parameters
@@ -34,12 +33,6 @@ This document defines the functional and technical requirements for the SerialSn
 - Support for standard Arduino boards
 - Basic protocol pattern recognition
 
-### 2.2 Out of Scope (Initial Release)
-- Advanced protocol decoding algorithms
-- Wireless communication protocols
-- Real-time protocol emulation/injection
-- GUI-based configuration tools
-- Cloud-based data storage
 
 ---
 
@@ -72,6 +65,7 @@ SerialSniffer operates as a pass-through monitoring device that captures serial 
   - Support standard baud rates: 9600, 19200, 38400, 57600, 115200
   - Allow custom baud rate configuration
   - Runtime baud rate switching capability
+  - Automatic Baud rate detection 
 
 #### FR-002: Data Format Configuration
 - **Priority:** High
@@ -125,12 +119,13 @@ SerialSniffer operates as a pass-through monitoring device that captures serial 
   - Export to plain text format
   - Export to CSV format with timestamps
   - Export to hex dump format
+  - Saving files to SD card via SPI
 
 #### FR-008: Session Management
 - **Priority:** Medium
 - **Description:** System shall manage capture sessions
 - **Acceptance Criteria:**
-  - Start/stop capture commands
+  - Start/stop/new capture commands
   - Clear buffer functionality
   - Session metadata (start time, duration, byte count)
 
