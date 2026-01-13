@@ -56,9 +56,43 @@ void printStatus();
 
 /**
  * Detect baud rate of target serial communication
- * TODO: Implement automatic detection algorithm
+ * Uses pulse width measurement on RX line to determine baud rate
+ * Timeout: 10 seconds, prompts for manual input if fails
  */
 void detectBaudRate();
+
+/**
+ * Find the shortest consistent pulse width from captured timings
+ * @param pulses Array of pulse width measurements in microseconds
+ * @param count Number of pulses in array
+ * @return Shortest consistent pulse width, or 0 if none found
+ */
+uint32_t findShortestConsistentPulse(uint32_t* pulses, int count);
+
+/**
+ * Round a raw baud rate to nearest standard baud rate
+ * @param rawBaud Calculated baud rate from pulse measurement
+ * @return Nearest standard baud rate (9600, 19200, 38400, 57600, 115200), or 0 if too far
+ */
+uint32_t roundToStandardBaud(uint32_t rawBaud);
+
+/**
+ * Validate detected baud rate by attempting to read data
+ * @return true if baud rate appears valid, false otherwise
+ */
+bool validateBaudRate();
+
+/**
+ * Prompt user to manually select baud rate
+ * Displays menu with options 1-5 for standard rates
+ */
+void promptManualBaudRate();
+
+/**
+ * Handle manual baud rate selection from user
+ * @param input Character input ('1'-'5')
+ */
+void handleManualBaudInput(char input);
 
 /**
  * Capture incoming data from target serial port
