@@ -12,7 +12,7 @@ SerialSniffer is designed to capture, analyze, and decode serial communication b
 
 ## Hardware Requirements
 
-- Arduino board (Uno, Mega, or compatible)
+- Supported Boards: Teensy 4.1
 - Serial communication interface
 - Target devices for monitoring
 
@@ -20,15 +20,17 @@ SerialSniffer is designed to capture, analyze, and decode serial communication b
 
 - Real-time serial data capture
 - Hex and ASCII output modes
-- Configurable baud rates
+- Baud Rate Detection
+- Check Sum Detection
+- Packet Analysis
 - Data logging capabilities
 
 ## Getting Started
 
 1. Connect your Arduino to your computer
 2. Upload the SerialSniffer sketch
-3. Configure serial parameters (baud rate, data bits, parity)
-4. Monitor and analyze captured data
+3. Monitor and analyze captured data
+4. Download Output files to be analysed with the python program
 
 ## Project Structure
 
@@ -36,6 +38,7 @@ SerialSniffer is designed to capture, analyze, and decode serial communication b
 SerialSniffer/
 ├── README.md
 ├── SerialSniffer.ino    # Main Arduino sketch
+├── SerialSnifferAnalysis.py
 └── examples/            # Example captures and analyses
 ```
 
