@@ -1,0 +1,32 @@
+# SerialSniffer Python Analysis Suite Requirements
+# Python 3.8+ required
+
+# Data manipulation and analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Serial communication (for direct device communication if needed)
+pyserial>=3.5
+
+# Data export and reporting
+openpyxl>=3.1.0  # Excel export support
+
+# CRC and checksum calculations
+crcmod>=1.7
+
+# CLI interface
+click>=8.1.0
+rich>=13.0.0  # Pretty terminal output
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Code quality
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
