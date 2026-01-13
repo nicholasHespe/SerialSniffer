@@ -3,7 +3,7 @@
 ## Document Information
 
 - **Project Name:** SerialSniffer
-- **Document Version:** 1.0 (Draft)
+- **Document Version:** 1.1 (Draft)
 - **Last Updated:** 2026-01-13
 - **Status:** Draft for Review
 
@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-SerialSniffer is an Arduino-based tool designed to capture, analyze, and decode serial communication between devices. It serves as a reverse engineering and debugging tool for understanding proprietary serial protocols and analyzing device communication patterns.
+SerialSniffer is a Teensy 4.1-based tool designed to capture, analyze, and decode serial communication between devices. It serves as a reverse engineering and debugging tool for understanding proprietary serial protocols and analyzing device communication patterns. The system includes both embedded capture firmware and a Python-based analysis suite for post-processing captured data.
 
 ### 1.1 Purpose
 This document defines the functional and technical requirements for the SerialSniffer project, providing a comprehensive specification for implementation and testing.
@@ -26,12 +26,22 @@ This document defines the functional and technical requirements for the SerialSn
 
 ## 2. Project Scope
 
+### 2.1 In Scope
 - Real-time serial data capture and monitoring
-- Multiple data format display (Hex, ASCII, Binary)
-- Configurable serial communication parameters
-- Data logging and export functionality
-- Support for standard Arduino boards
-- Basic protocol pattern recognition
+- Multiple data format display (Hex, ASCII)
+- Automatic baud rate detection
+- Checksum detection and validation
+- Packet analysis and boundary identification
+- Data logging to SD card
+- Python-based post-capture analysis suite
+- Support for Teensy 4.1 platform
+
+### 2.2 Out of Scope (Initial Release)
+- Support for other microcontroller platforms
+- Real-time protocol emulation/injection
+- GUI-based configuration tools
+- Cloud-based data storage
+- Wireless protocol monitoring
 
 
 ---
@@ -39,13 +49,14 @@ This document defines the functional and technical requirements for the SerialSn
 ## 3. System Overview
 
 ### 3.1 High-Level Architecture
-SerialSniffer operates as a pass-through monitoring device that captures serial data transmitted between two devices without interrupting communication.
+SerialSniffer operates as a pass-through monitoring device that captures serial data transmitted between two devices without interrupting communication. The system consists of embedded capture hardware and offline analysis software.
 
 **Components:**
-1. Arduino microcontroller (capture engine)
-2. Serial interface hardware
-3. USB connection to host computer
-4. Host-side monitoring software (serial terminal)
+1. Teensy 4.1 microcontroller (capture engine)
+2. Serial interface hardware for target device monitoring
+3. SD card for data logging
+4. USB connection to host computer for configuration and monitoring
+5. Python-based analysis suite (SerialSnifferAnalysis.py) for post-processing
 
 ### 3.2 Operating Modes
 - **Monitor Mode:** Passive capture without interference
@@ -58,14 +69,15 @@ SerialSniffer operates as a pass-through monitoring device that captures serial 
 
 ### 4.1 Serial Communication Capture
 
-#### FR-001: Baud Rate Configuration
+#### FR-001: Baud Rate Detection
 - **Priority:** High
-- **Description:** System shall support configurable baud rates
+- **Description:** System shall automatically detect baud rates of target serial communication
 - **Acceptance Criteria:**
-  - Support standard baud rates: 9600, 19200, 38400, 57600, 115200
-  - Allow custom baud rate configuration
-  - Runtime baud rate switching capability
-  - Automatic Baud rate detection 
+  - Automatic detection of standard baud rates: 9600, 19200, 38400, 57600, 115200
+  - Detection accuracy > 95% for standard rates
+  - Detection time < 2 seconds with active communication
+  - Manual override capability for non-standard baud rates
+  - Display detected baud rate to user 
 
 #### FR-002: Data Format Configuration
 - **Priority:** High
@@ -83,18 +95,38 @@ SerialSniffer operates as a pass-through monitoring device that captures serial 
   - Buffer size configurable up to 1KB
   - No data loss during normal operation
 
+#### FR-004: Checksum Detection
+- **Priority:** High
+- **Description:** System shall detect and validate checksums in captured data
+- **Acceptance Criteria:**
+  - Support common checksum algorithms (CRC8, CRC16, XOR, sum-based)
+  - Automatic checksum pattern recognition
+  - Validation of detected checksums against packet data
+  - Report checksum errors and validation failures
+  - Display checksum type and location within packets
+
 ### 4.2 Data Display and Analysis
 
-#### FR-004: Multiple Output Formats
+#### FR-005: Multiple Output Formats
 - **Priority:** High
 - **Description:** System shall display captured data in multiple formats
 - **Acceptance Criteria:**
   - Hexadecimal format with byte spacing
   - ASCII format with printable character display
-  - Binary format (optional)
   - Timestamp for each packet/byte
 
-#### FR-005: Data Filtering
+#### FR-006: Packet Analysis
+- **Priority:** High
+- **Description:** System shall perform intelligent packet analysis on captured data
+- **Acceptance Criteria:**
+  - Automatic packet boundary detection
+  - Identify packet structure (header, payload, checksum, footer)
+  - Detect repeated sequences and patterns
+  - Calculate statistics (packet frequency, size distribution)
+  - Export packet structure analysis
+  - Support for Python-based post-processing analysis
+
+#### FR-007: Data Filtering
 - **Priority:** Medium
 - **Description:** System shall provide data filtering capabilities
 - **Acceptance Criteria:**
@@ -102,50 +134,60 @@ SerialSniffer operates as a pass-through monitoring device that captures serial 
   - Show/hide control characters
   - Highlight specific byte sequences
 
-#### FR-006: Pattern Recognition
-- **Priority:** Low
-- **Description:** System shall identify common patterns in serial data
-- **Acceptance Criteria:**
-  - Detect repeated sequences
-  - Identify potential packet boundaries
-  - Calculate basic statistics (byte frequency)
-
 ### 4.3 Data Logging
 
-#### FR-007: Data Export
+#### FR-008: Data Export
 - **Priority:** High
-- **Description:** System shall log captured data for later analysis
+- **Description:** System shall log captured data to SD card for later analysis
 - **Acceptance Criteria:**
-  - Export to plain text format
+  - Save data to SD card via SPI interface
   - Export to CSV format with timestamps
   - Export to hex dump format
-  - Saving files to SD card via SPI
+  - Unique filename generation for each session
+  - File size management and rotation capabilities
 
-#### FR-008: Session Management
+#### FR-009: Session Management
 - **Priority:** Medium
 - **Description:** System shall manage capture sessions
 - **Acceptance Criteria:**
   - Start/stop/new capture commands
   - Clear buffer functionality
   - Session metadata (start time, duration, byte count)
+  - Multiple file support for extended captures
 
 ### 4.4 Configuration and Control
 
-#### FR-009: Runtime Configuration
-- **Priority:** High
+#### FR-010: Runtime Configuration
+- **Priority:** Medium
 - **Description:** System shall allow runtime configuration changes
 - **Acceptance Criteria:**
   - Change parameters via serial commands
   - Save configuration to EEPROM
   - Load configuration on startup
+  - Simplified setup with automatic detection reducing manual configuration needs
 
-#### FR-010: Status Reporting
+#### FR-011: Status Reporting
 - **Priority:** Medium
 - **Description:** System shall report operational status
 - **Acceptance Criteria:**
   - Buffer utilization percentage
   - Error counters (overflow, framing errors)
   - Connection status indicators
+  - Detected baud rate display
+  - SD card status and available space
+
+### 4.5 Python Analysis Suite
+
+#### FR-012: Post-Capture Analysis
+- **Priority:** High
+- **Description:** Python-based analysis tool (SerialSnifferAnalysis.py) shall process captured data files
+- **Acceptance Criteria:**
+  - Import data from SD card exports
+  - Advanced pattern recognition and protocol analysis
+  - Statistical analysis and visualization
+  - Protocol structure documentation generation
+  - Export analyzed results in multiple formats
+  - Command-line interface for batch processing
 
 ---
 
@@ -183,21 +225,24 @@ SerialSniffer operates as a pass-through monitoring device that captures serial 
 
 ### 5.4 Compatibility
 
-#### NFR-007: Arduino Platform Support
-- **Description:** System shall support multiple Arduino platforms
-- **Supported Boards:**
-  - Arduino Uno
-  - Arduino Mega 2560
-  - Arduino Nano
-  - Compatible clones
+#### NFR-007: Hardware Platform Support
+- **Description:** System shall be optimized for Teensy 4.1 platform
+- **Supported Board:**
+  - Teensy 4.1 (primary platform)
+- **Hardware Requirements:**
+  - Multiple hardware serial ports
+  - SD card interface (SPI)
+  - Sufficient memory for data buffering (> 512KB RAM)
+  - High-speed USB for configuration and monitoring
 
 #### NFR-008: Host Software Compatibility
-- **Description:** System shall work with standard serial terminal software
+- **Description:** System shall work with standard serial terminal and analysis software
 - **Supported Software:**
   - Arduino Serial Monitor
   - PuTTY
   - Screen (Linux/Mac)
   - CoolTerm
+  - Python 3.8+ (for SerialSnifferAnalysis.py)
 
 ---
 
@@ -235,12 +280,14 @@ The system shall accept commands via serial interface:
 ### 6.3 Status Display
 ```
 === SerialSniffer Status ===
-Baud Rate: 9600
+Baud Rate: 9600 (Auto-detected)
 Data Format: 8N1
 Capture: Active
 Buffer: 45% (461/1024 bytes)
 Packets Captured: 127
+Checksum: CRC16 detected
 Errors: 0
+SD Card: OK (14.2 GB free)
 Uptime: 00:15:42
 ```
 
@@ -248,24 +295,30 @@ Uptime: 00:15:42
 
 ## 7. Hardware Interface Specifications
 
-### 7.1 Pin Assignments
+### 7.1 Pin Assignments (Teensy 4.1)
 
 | Pin | Function | Description |
 |-----|----------|-------------|
-| D0/RX | Monitor RX | Receive from target device |
-| D1/TX | Monitor TX | Transmit to target device |
-| D2 | Target TX | Data from Device A |
-| D3 | Target RX | Data from Device B |
-| D13 | Status LED | Activity indicator |
+| Serial1 (0/1) | Monitor Port 1 | Primary serial interface for target monitoring |
+| Serial2 (7/8) | Monitor Port 2 | Secondary serial interface (optional) |
+| SPI (MOSI/MISO/SCK/CS) | SD Card Interface | Data logging to microSD card |
+| USB | Host Communication | Configuration and real-time monitoring |
+| Pin 13 | Status LED | Activity indicator (built-in LED) |
 
 ### 7.2 Connection Topology
 ```
-Device A  <------>  Arduino  <------>  Device B
-(Target)          (Sniffer)          (Target)
-                       |
-                       v
-                  Host Computer
-                 (Serial Monitor)
+Device A  <------>  Teensy 4.1  <------>  Device B
+(Target)            (Sniffer)            (Target)
+                         |
+                         |-- SD Card (Data Logging)
+                         |
+                         v
+                   Host Computer
+                 (Configuration/Monitor)
+                         |
+                         v
+              SerialSnifferAnalysis.py
+                (Post-Processing)
 ```
 
 ---
@@ -304,29 +357,32 @@ Timestamp,Direction,Value_Hex,Value_ASCII,Status
 
 **Actor:** Hardware Researcher
 **Goal:** Capture communication between two devices
-**Preconditions:** Arduino programmed and connected
+**Preconditions:** Teensy 4.1 programmed and connected, SD card inserted
 **Steps:**
-1. Connect Arduino between target devices
-2. Configure baud rate to match target
-3. Start capture
-4. Operate target devices
-5. Stop capture and export data
+1. Connect Teensy 4.1 between target devices
+2. Start capture (baud rate automatically detected)
+3. Operate target devices to generate traffic
+4. Stop capture
+5. Remove SD card and download data files
+6. Analyze captured data using SerialSnifferAnalysis.py
 
-**Success Criteria:** All data captured accurately
+**Success Criteria:** All data captured accurately with automatic baud rate detection
 
 ### 9.2 Use Case 2: Protocol Reverse Engineering
 
 **Actor:** Security Researcher
 **Goal:** Understand unknown protocol structure
-**Preconditions:** Serial traffic available
+**Preconditions:** Serial traffic available, SerialSniffer deployed
 **Steps:**
-1. Capture extended communication session
-2. Export data for analysis
-3. Use pattern recognition to identify structure
-4. Document protocol commands
-5. Verify findings with additional captures
+1. Capture extended communication session (automatic baud detection)
+2. Download data files from SD card
+3. Run SerialSnifferAnalysis.py on captured data
+4. Review automatic packet analysis and checksum detection results
+5. Use Python tools to identify protocol structure and commands
+6. Document protocol specification
+7. Verify findings with additional captures
 
-**Success Criteria:** Protocol structure identified
+**Success Criteria:** Protocol structure identified including packet format, checksums, and command set
 
 ### 9.3 Use Case 3: Debugging Serial Issues
 
@@ -370,21 +426,27 @@ Timestamp,Direction,Value_Hex,Value_ASCII,Status
 
 | Test ID | Description | Expected Result |
 |---------|-------------|-----------------|
-| FT-001 | Baud rate switching | Successful capture at all rates |
-| FT-002 | Data format changes | Correct display in all formats |
-| FT-003 | Buffer overflow handling | Graceful handling, warning issued |
-| FT-004 | Extended capture | No data loss over 1 hour |
-| FT-005 | Export functionality | Valid output files generated |
+| FT-001 | Automatic baud rate detection | Correct detection of 9600-115200 baud |
+| FT-002 | Checksum detection and validation | Identify and validate common checksum types |
+| FT-003 | Packet analysis | Accurate packet boundary detection |
+| FT-004 | Buffer overflow handling | Graceful handling, warning issued |
+| FT-005 | Extended capture to SD card | No data loss over 1 hour |
+| FT-006 | SD card file export | Valid CSV and hex dump files generated |
+| FT-007 | Python analysis suite | Successful import and analysis of captured data |
+| FT-008 | Multi-session captures | Multiple files with unique names |
 
 ### 11.2 Performance Testing
-- Sustained throughput at maximum baud rate
+- Sustained throughput at maximum baud rate (115200+)
 - Buffer management under load
-- Memory leak testing
+- Memory leak testing (24+ hour operation)
+- SD card write performance
+- Python analysis processing time for large datasets
 
 ### 11.3 Compatibility Testing
-- Testing on all supported Arduino boards
+- Testing on Teensy 4.1 hardware
 - Verification with various serial terminal software
-- Different host operating systems
+- Python analysis suite on Windows, Linux, macOS
+- Different SD card types and sizes
 
 ---
 
@@ -397,10 +459,19 @@ Timestamp,Direction,Value_Hex,Value_ASCII,Status
 - Users have basic electronics knowledge
 
 ### 12.2 Dependencies
-- Arduino IDE or compatible development environment
-- Standard Arduino libraries
-- USB drivers for Arduino board
-- Serial terminal application on host
+
+**Hardware:**
+- Teensy 4.1 microcontroller board
+- MicroSD card (minimum 1GB recommended)
+- USB cable for programming and monitoring
+
+**Software:**
+- Arduino IDE 2.0+ or PlatformIO
+- Teensyduino add-on for Arduino IDE
+- USB drivers for Teensy 4.1
+- Python 3.8+ (for SerialSnifferAnalysis.py)
+- Python libraries: pandas, numpy, matplotlib (for analysis suite)
+- Serial terminal application (optional, for real-time monitoring)
 
 ---
 
@@ -426,12 +497,16 @@ Timestamp,Direction,Value_Hex,Value_ASCII,Status
 
 | Term | Definition |
 |------|------------|
-| Baud Rate | Number of signal changes per second |
-| UART | Universal Asynchronous Receiver/Transmitter |
+| Baud Rate | Number of signal changes per second in serial communication |
+| CRC | Cyclic Redundancy Check - error-detecting code commonly used in digital networks |
+| Checksum | Value computed from data to detect errors in transmission |
+| Framing Error | Invalid start/stop bit in serial data |
+| Hex Dump | Hexadecimal representation of binary data |
+| Packet | Unit of data transmission with defined structure (header, payload, checksum) |
 | Pass-through | Forwarding data without modification |
 | Protocol | Set of rules for data communication |
-| Hex Dump | Hexadecimal representation of binary data |
-| Framing Error | Invalid start/stop bit in serial data |
+| Teensy 4.1 | ARM Cortex-M7 based microcontroller development board with enhanced features |
+| UART | Universal Asynchronous Receiver/Transmitter |
 
 ---
 
@@ -450,14 +525,17 @@ Timestamp,Direction,Value_Hex,Value_ASCII,Status
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-13 | Claude | Initial draft for review |
+| 1.1 | 2026-01-13 | Claude | Updated to reflect Teensy 4.1 platform, added automatic baud rate detection, checksum detection, packet analysis, Python analysis suite, and SD card logging features |
 
 ---
 
 ## Appendix A: References
 
-1. Arduino Documentation: https://www.arduino.cc/reference/en/
-2. Serial Communication Standards
-3. UART Protocol Specifications
+1. Teensy 4.1 Documentation: https://www.pjrc.com/store/teensy41.html
+2. Arduino/Teensyduino IDE: https://www.pjrc.com/teensy/teensyduino.html
+3. Serial Communication Standards (RS-232, UART)
+4. CRC and Checksum Algorithms Reference
+5. Python Data Analysis Libraries (pandas, numpy, matplotlib)
 
 ## Appendix B: Command Reference
 
